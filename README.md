@@ -81,7 +81,6 @@ All 4 models produce predictions, displayed as:
 
 ## 📁 Project Structure
 
----
 ````
 Maching_Learning_final/
 │
