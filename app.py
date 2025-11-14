@@ -5,8 +5,15 @@ import torch
 import torch.nn as nn
 import joblib
 from sklearn.linear_model import Ridge
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-from src.preprocessing import scale_numeric_features
+from src.visualization import (
+    plot_total_mean_by_country,
+    plot_total_mean_over_years,
+    plot_ageclass_vs_total_mean,
+    plot_consumers_vs_total,
+)
 
 # ---------- Models ----------
 class TabularCNN(nn.Module):
@@ -30,7 +37,19 @@ class TabularCNN(nn.Module):
 # ---------- Load Artifacts ----------
 st.title("Food Consumption Prediction App")
 
-st.subheader("Step 1: Load Models and Scaler")
+
+st.subheader("Background Information from Dataset")
+df = pd.read_csv("data/fullcifocoss.csv", sep=";")
+
+st.write(df.head())
+
+# Фоновые визуализации
+st.pyplot(plot_total_mean_by_country(df))
+st.pyplot(plot_total_mean_over_years(df))
+st.pyplot(plot_ageclass_vs_total_mean(df))
+st.pyplot(plot_consumers_vs_total(df))
+
+st.subheader("Load Models and Scaler")
 hgb_model = joblib.load("artifacts/hgb_model.joblib")
 lgbm_model = joblib.load("artifacts/lgbm_model.joblib")
 meta_model = joblib.load("artifacts/meta_model.joblib")
@@ -43,7 +62,7 @@ tabular_cnn_model.eval()
 st.success("✅ Models and scaler loaded successfully!")
 
 # ---------- User Input ----------
-st.subheader("Step 2: Enter Input Features")
+st.subheader("Enter Input Features")
 
 with st.form("user_input_form"):
     Total_P95 = st.number_input("Total_P95", value=1.5, step=0.1)
@@ -101,10 +120,19 @@ if submitted:
 
     # ---------- Show Predictions ----------
     st.subheader("Predictions from all models")
-    st.write(pd.DataFrame({
+    preds_df = pd.DataFrame({
         "HGB": pred_hgb,
         "LGBM": pred_lgbm,
         "Stacked": pred_meta,
         "TabularCNN": pred_cnn
-    }))
+    })
+    st.write(preds_df)
 
+    # ---------- Compare Predictions Graphically ----------
+    st.subheader("Step 5: Compare Predictions")
+    fig, ax = plt.subplots(figsize=(8,6))
+    sns.barplot(data=preds_df.T.reset_index(), x='index', y=0, palette='viridis', ax=ax)
+    ax.set_ylabel("Predicted Total Mean")
+    ax.set_xlabel("Model")
+    ax.set_title("Comparison of Model Predictions")
+    st.pyplot(fig)
