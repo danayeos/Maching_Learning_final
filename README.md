@@ -1,173 +1,184 @@
-Food Consumption Prediction with Machine Learning
-📖 Overview
-
-This project focuses on analyzing and predicting food consumption patterns across various demographic and geographic groups using supervised machine learning algorithms. The dataset contains information on food intake by age, gender, country, food category, and statistical measures such as mean, median, percentiles, and standard deviation.
-
-The goal is to create predictive models capable of estimating average food consumption (Total_Mean) based on contextual factors, helping public health organizations, nutrition scientists, and policymakers make informed decisions.
-
-Machine Learning allows uncovering hidden correlations between demographic factors and consumption behavior, providing a more detailed understanding than traditional statistical approaches.
-
-🗂 Dataset
-
-The dataset contains:
-
-Demographics: Age class, Gender, Country
-
-Food Information: Food name, category
-
-Time Context: Year of data collection
-
-Consumption Statistics: Consumers_Mean, Total_Mean, median, percentiles, etc.
-
-Target variable: Total_Mean
-
-Features: All other columns except Total_Mean.
-
-Format: CSV, semicolon-separated (;)
-
-⚙️ Data Preprocessing
-
-Load dataset (pandas) and drop rows with missing target (Total_Mean).
-
-Identify numerical and categorical features:
-
-Numerical: np.number types
-
-Categorical: the rest
-
-Train-test split (80/20)
-
-Preprocessing pipeline:
-
-Numerical: median imputation + StandardScaler
-
-Categorical: most frequent imputation + OrdinalEncoder (compact representation)
-
-Memory optimization: convert features to float32
-
-🧰 Models Implemented
-1️⃣ HistGradientBoostingRegressor (HGBR)
-
-Tree-based gradient boosting using histogram-based splits
-
-Advantages: fast, memory-efficient, handles numerical and ordinal features
-
-Hyperparameters:
-
-learning_rate=0.05
-
-max_bins=255
-
-early_stopping=True
-
-Metrics example:
-
-{"MAE": 3.2, "RMSE": 12.4, "R2": 0.87}
-
-2️⃣ MiniBatchKMeans (Cluster->Mean)
-
-Clustering approach: predict target as average value of the cluster
-
-Advantages: fast for very large datasets
-
-Limitation: does not use target values in training, so predictive performance is poor
-
-Metrics example:
-
-{"MAE": 5.85, "RMSE": 32.75, "R2": 0.0085}
-
-3️⃣ Tabular 1D-CNN
-
-Compact 1D Convolutional Neural Network for ordinal/tabular features
-
-Architecture:
-
-Conv1d(1,16) → ReLU
-
-Conv1d(16,32) → ReLU
-
-AdaptiveAvgPool1d(32) → Flatten → Linear → Dropout → Linear(1)
-
-Trained on a subsample of training data (MAX_TRAIN=120_000)
-
-Metrics example:
-
-{"MAE": 3.95, "RMSE": 14.12, "R2": 0.81}
-
-4️⃣ LightGBM Regressor (Log-transformed target)
-
-Gradient boosting model using log1p transformation on the target
-
-Advantages: reduces impact of outliers, faster training
-
-Hyperparameters:
-
-n_estimators=1500, learning_rate=0.03, num_leaves=63
-
-Metrics example:
-
-{"MAE": 3.1, "RMSE": 11.9, "R2": 0.88}
-
-📈 Model Evaluation
-
-All models are evaluated using:
-
-MAE (Mean Absolute Error)
-
-RMSE (Root Mean Squared Error)
-
-R² Score (Coefficient of determination)
-
-Summary of metrics: stored in metrics.json for easy comparison.
-
-💾 Saving Artifacts
-
-All preprocessing pipelines, model weights, and metadata are saved in artifacts/:
-
-Preprocessor: preprocessor.joblib
-
-HGBR: hgb_regressor.joblib
-
-MiniBatchKMeans mapping: kmeans_bundle.json
-
-CNN: tabular_cnn.pt + cnn_meta.json
-
-LightGBM: lgbm_regressor_LOG.joblib
-
-🔬 Scientific Contribution
-
-Uses supervised ML to predict food consumption on multi-country, multi-demographic dataset
-
-Combines tree-based, clustering, and neural network approaches
-
-Highlights the importance of log transformation for skewed consumption data
-
-Provides a framework for interpretable and actionable nutrition insights
-
-🚀 Usage
-
-Clone repository / download notebook
-
-Install dependencies:
-
+# Food Consumption Prediction — Machine Learning Final Project
+
+This project focuses on predicting **Total Mean food consumption** using multiple machine learning models, including advanced ensemble and deep learning methods.  
+It includes data exploration, model training, stacked model architecture, and an interactive **Streamlit web application**.
+
+---
+
+## Project Overview
+
+The goal of this project is to build a robust predictive system capable of estimating food consumption patterns based on statistical distribution indicators.  
+The dataset contains aggregated food consumption metrics across countries, genders, and population segments.
+
+We trained 4 strong models:
+
+- **HistGradientBoostingRegressor (HGB)**
+- **LightGBM (LGBM)**
+- **Tabular CNN (PyTorch)**
+- **Stacked Meta-Model** (HGB + LGBM + Ridge)
+
+The best performance was achieved using the **Stacked Model**, which combines predictions from the base learners.
+
+The final result is delivered as a **Streamlit app** that:
+- visualizes the dataset,
+- accepts custom user input,
+- runs predictions through all models,
+- compares model results visually.
+
+---
+
+## Models Used
+
+### 1. HistGradientBoostingRegressor
+A powerful gradient boosting algorithm from scikit-learn, efficient on large tabular data.
+
+### 2. LightGBM
+Fast and optimized gradient boosting framework by Microsoft — strong performance on structured data.
+
+### 3. Tabular CNN
+A custom 1D Convolutional Neural Network built with PyTorch for tabular prediction tasks.
+
+### 4. Stacked Meta-Model
+Combines:
+- HGB predictions
+- LGBM predictions
+- Ridge regression predictions  
+  into a final **meta-model**.
+
+This approach boosts performance by leveraging strengths of each model.
+
+---
+
+## Streamlit App
+
+The application includes:
+
+### Background Data Visualization
+- Distribution of Total Mean
+- Boxplot: Total Mean by Gender
+- Correlation heatmap
+- Consumers vs Total Mean (scatterplot)
+- Country distribution map
+- Top food categories
+
+### User Input Interface
+User enters 8 statistical feature values:
+- Total_P95
+- Total_P975
+- Total_Standard_deviation
+- Total_Median
+- Consumers_P975
+- Consumers_P95
+- Consumers_Standard_deviation
+- Consumers_Mean
+
+### Model Comparison
+All 4 models produce predictions, displayed as:
+- table
+- bar chart comparison
+
+---
+
+## 📁 Project Structure
+
+---
+````
+Maching_Learning_final/
+│
+├── app.py # Streamlit application
+│
+├── artifacts/ # Trained models
+│ ├── hgb_model.joblib
+│ ├── lgbm_model.joblib
+│ ├── meta_model.joblib
+│ ├── scaler.joblib
+│ └── tabular_cnn_model.pth
+│
+├── data/
+│ └── fullcifocoss.csv # Main dataset
+│
+├── src/
+│ ├── preprocessing.py
+│ ├── visualization.py
+│ ├── data_loader.py
+│ └── init.py
+│
+├── notebooks/
+│ ├── 01_HGB_model.ipynb
+│ ├── 02_TabularCNN_model.ipynb
+│ ├── 03_LGBM_model.ipynb
+│ └── 04_meta_model.ipynb
+│
+├── docs/
+├── presentation/
+│
+├── README.md
+└── requirements.txt
+````
+
+---
+
+## Installation
+
+### 1. Clone the repository
+```
+git clone https://github.com/danayeos/Machine_Learning_final.git
+cd Machine_Learning_final
+```
+### 2. Create virtual environment
+````
+python -m venv .venv
+source .venv/bin/activate  # on Linux/macOS
+.venv\Scripts\activate     # on Windows
+````
+### 3. Install requirements
+````
 pip install -r requirements.txt
-pip install lightgbm torch scikit-learn pandas numpy
+````
+---
+## ▶️ Run Streamlit App
+````
+streamlit run app.py
+````
+### Open the browser at:
+````
+http://localhost:8501
+````
+---
+## Requirements
 
+Main libraries:
 
-Run notebook (main_notebook.ipynb) to:
+* pandas
+* numpy
+* matplotlib
+* seaborn
+* scikit-learn
+* lightgbm
+* torch
+* streamlit
+* joblib
 
-Preprocess data
+Full list in `requirements.txt`.
 
-Train models
+## Key Features
 
-Evaluate and save artifacts
+✔ Modern ML stack (Boosting + Deep Learning)
 
-Inspect metrics in metrics.json
+✔ Clean modular code (src/ folder)
 
-Load models for prediction:
+✔ Rich visualization layer
 
-import joblib, torch
-preprocessor = joblib.load("artifacts/preprocessor.joblib")
-hgb_model = joblib.load("artifacts/hgb_regressor.joblib")
-cnn_model = TabularCNN(input_dim)
-cnn_model.load_state_dict(torch.load("artifacts/tabular_cnn.pt"))
+✔ Streamlit app for real-time predictions
+
+✔ Stacked model for improved accuracy
+
+✔ Full documentation + presentation included
+
+## 📝 Authors
+
+* Sailauova Uldana
+* Shamil Nartay
+* Marden Aruzhan
+---
+Machine Learning Final Project, 2025.
